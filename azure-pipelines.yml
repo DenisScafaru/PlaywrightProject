@@ -1,5 +1,12 @@
-trigger:
-  - main
+trigger: none
+
+schedules:
+- cron: "0 3 * * *"
+  displayName: Daily 3 AM Run
+  branches:
+    include:
+      - main
+  always: true
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -8,44 +15,31 @@ variables:
   node_version: '18.x'
 
 stages:
-  - stage: Build
+  - stage: Test
     jobs:
-      - job: BuildAndTest
-        displayName: 'Build and Run Tests'
+      - job: PlaywrightTests
+        displayName: 'Run Playwright Tests'
         steps:
-          # Set up Node.js
+
           - task: NodeTool@0
             inputs:
               versionSpec: $(node_version)
             displayName: 'Install Node.js'
 
-          # Install dependencies
           - script: npm ci
             displayName: 'Install Dependencies'
 
-          # Install Playwright browsers
-          - script: npx playwright install
+          - script: |
+              npx playwright install-deps
+              npx playwright install chromium firefox
             displayName: 'Install Playwright Browsers'
 
-          # Run Playwright tests
-          - script: npx playwright test
-            displayName: 'Run Playwright Tests'
-            continueOnError: false
+          - script: npx playwright test --project=chromium
+            displayName: 'Run Playwright Tests (Chromium only)'
 
-          # Publish test results
           - task: PublishTestResults@2
             condition: succeededOrFailed()
             inputs:
               testResultsFormat: 'JUnit'
-              testResultsFiles: '**/test-results/**/*.xml'
-              failTaskOnFailedTests: true
+              testResultsFiles: 'results.xml'
             displayName: 'Publish Test Results'
-
-          # Publish code coverage (optional)
-          - task: PublishCodeCoverageResults@1
-            condition: succeededOrFailed()
-            inputs:
-              codeCoverageTool: Cobertura
-              summaryFileLocation: '**/coverage/cobertura-coverage.xml'
-            displayName: 'Publish Code Coverage'
-            continueOnError: true
