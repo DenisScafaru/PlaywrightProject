@@ -1,0 +1,51 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  node_version: '18.x'
+
+stages:
+  - stage: Build
+    jobs:
+      - job: BuildAndTest
+        displayName: 'Build and Run Tests'
+        steps:
+          # Set up Node.js
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(node_version)
+            displayName: 'Install Node.js'
+
+          # Install dependencies
+          - script: npm ci
+            displayName: 'Install Dependencies'
+
+          # Install Playwright browsers
+          - script: npx playwright install
+            displayName: 'Install Playwright Browsers'
+
+          # Run Playwright tests
+          - script: npx playwright test
+            displayName: 'Run Playwright Tests'
+            continueOnError: false
+
+          # Publish test results
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/test-results/**/*.xml'
+              failTaskOnFailedTests: true
+            displayName: 'Publish Test Results'
+
+          # Publish code coverage (optional)
+          - task: PublishCodeCoverageResults@1
+            condition: succeededOrFailed()
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: '**/coverage/cobertura-coverage.xml'
+            displayName: 'Publish Code Coverage'
+            continueOnError: true
