@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "test": "playwright test"
+    "test": "playwright test"
   },
   "repository": {
     "type": "git",
@@ -20,6 +20,9 @@
   "homepage": "https://github.com/DenisScafaru/PlaywrightProject#readme",
   "devDependencies": {
     "@playwright/test": "^1.60.0",
-    "@types/node": "^25.9.2"
+    "@types/node": "^25.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
   }
 }
